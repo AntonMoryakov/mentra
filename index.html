@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mentra</title>
+
+  <!-- Подключение манифеста -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Иконка для ярлыка -->
+  <link rel="icon" href="/icon.png" />
+  <link rel="apple-touch-icon" href="/icon.png" />
+
+  <!-- Цвет интерфейса -->
+  <meta name="theme-color" content="#4a90e2" />
+  <meta name="description" content="Простое PWA приложение" />
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      text-align: center;
+      padding: 50px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 { color: #4a90e2; }
+    .install-btn {
+      margin-top: 30px;
+      padding: 12px 24px;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>test</h1>
+  <p> Тестирую</p>
+  <button class="install-btn" id="installButton" style="display:none;">Установить приложение</button>
+
+  <script>
+    // Обработка установки PWA
+    let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installButton').style.display = 'block';
+
+      document.getElementById('installButton').addEventListener('click', () => {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+          deferredPrompt = null;
+          document.getElementById('installButton').style.display = 'none';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
