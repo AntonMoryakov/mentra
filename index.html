@@ -14,6 +14,9 @@
   <meta name="theme-color" content="#4a90e2" />
   <meta name="description" content="PWA с кнопкой Привет" />
 
+  <!-- 🔹 Подключение Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -202,6 +205,76 @@
       cursor: pointer;
       font-weight: 600;
     }
+
+    /* === ФОРМА АВТОРИЗАЦИИ === */
+    .auth-section {
+      margin-top: 30px;
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .auth-section input {
+      padding: 12px;
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .auth-button-register {
+      flex: 1;
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .auth-button-login {
+      flex: 1;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #authMessage {
+      margin: 10px 0;
+      font-size: 14px;
+      min-height: 20px;
+      color: #d9534f;
+    }
+
+    /* === ПРИВЕТСТВИЕ ПОСЛЕ ВХОДА === */
+    #greetingContainer {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+      color: #4a90e2;
+      font-weight: 500;
+    }
+
+    #logoutButton {
+      margin-top: 10px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -227,6 +300,28 @@
   <div class="container">
     <button id="helloButton">Привет</button>
     <p id="message"></p>
+  </div>
+
+  <!-- 🔐 Форма авторизации -->
+  <div class="auth-section">
+    <h3 style="font-size: 18px; color: #333; margin-bottom: 15px;">Войдите или зарегистрируйтесь</h3>
+
+    <input id="emailInput" type="email" placeholder="Email" />
+    <input id="passwordInput" type="password" placeholder="Пароль" />
+
+    <div class="auth-buttons">
+      <button id="registerButton" class="auth-button-register">Регистрация</button>
+      <button id="loginButton" class="auth-button-login">Вход</button>
+    </div>
+
+    <p id="authMessage"></p>
+  </div>
+
+  <!-- 👋 Приветствие после входа -->
+  <div id="greetingContainer">
+    Добро пожаловать, <span id="userEmail"></span>!
+    <br>
+    <button id="logoutButton">Выйти</button>
   </div>
 
   <script>
@@ -336,6 +431,95 @@
           .catch(err => console.log('❌ Ошибка регистрации SW:', err));
       });
     }
+
+    // ===================================================================
+    // 🔹 SUPABASE — ЗАМЕНИ НИЖЕ СВОИМИ КЛЮЧАМИ!
+    // ===================================================================
+
+    const supabaseUrl = 'https://jaduasgftjxcdncdyqdv.supabase.co'; // ← ВСТАВЬ СВОЙ URL
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphZHVhc2dmdGp4Y2RuY2R5cWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MjEyOTcsImV4cCI6MjA3NTM5NzI5N30.vm7VI7bZ2oWX8EMaAteRP5rI4jx2YqqR__vPSJ0W7bg'; // ← ВСТАВЬ СВОЙ КЛЮЧ
+    const supabase$1 = supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+    // Элементы формы
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const registerButton = document.getElementById('registerButton');
+    const loginButton = document.getElementById('loginButton');
+    const authMessage = document.getElementById('authMessage');
+    const greetingContainer = document.getElementById('greetingContainer');
+    const userEmailSpan = document.getElementById('userEmail');
+    const logoutButton = document.getElementById('logoutButton');
+
+    // Проверка сессии при загрузке
+    async function checkUser() {
+      const { data } = await supabase$1.auth.getSession();
+      if (data.session) {
+        showGreeting(data.session.user.email);
+      }
+    }
+
+    // Регистрация
+    registerButton.addEventListener('click', async () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        authMessage.textContent = 'Введите email и пароль';
+        return;
+      }
+
+      const { error } = await supabase$1.auth.signUp({ email, password });
+
+      if (error) {
+        authMessage.textContent = error.message;
+      } else {
+        authMessage.innerHTML = '✅ Письмо подтверждения отправлено!<br>Проверьте почту.';
+        authMessage.style.color = '#5cb85c';
+        emailInput.value = '';
+        passwordInput.value = '';
+      }
+    });
+
+    // Вход
+    loginButton.addEventListener('click', async () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        authMessage.textContent = 'Введите email и пароль';
+        return;
+      }
+
+      const { data, error } = await supabase$1.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        authMessage.textContent = error.message;
+      } else {
+        authMessage.textContent = '✅ Вход выполнен!';
+        authMessage.style.color = '#5cb85c';
+        showGreeting(email);
+        emailInput.value = '';
+        passwordInput.value = '';
+      }
+    });
+
+    // Показать приветствие
+    function showGreeting(email) {
+      userEmailSpan.textContent = email;
+      greetingContainer.style.display = 'block';
+      authMessage.textContent = '';
+    }
+
+    // Выход
+    logoutButton.addEventListener('click', async () => {
+      await supabase$1.auth.signOut();
+      greetingContainer.style.display = 'none';
+      authMessage.textContent = 'Вы вышли из системы.';
+      authMessage.style.color = '#4a90e2';
+    });
+
+    // Запуск проверки пользователя
+    checkUser();
   </script>
 </body>
 </html>
