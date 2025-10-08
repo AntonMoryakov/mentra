@@ -1,5 +1,3 @@
-// service-worker.js
-
 const CACHE_NAME = 'pwa-v1';
 const urlsToCache = ['/', '/index.html', '/icon.png'];
 
@@ -12,7 +10,6 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  // Удаляем старые кэши
   event.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(

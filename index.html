@@ -13,21 +13,6 @@
   <!-- Цвет интерфейса -->
   <meta name="theme-color" content="#4a90e2" />
   <meta name="description" content="PWA с кнопкой Привет" />
-</head>
-<body>
-
-  <!-- 🔽 Баннер "Установите приложение" — виден только в браузере -->
-  <div id="installBanner" class="banner">
-    <p>Добавьте это приложение на главный экран для лучшего опыта!</p>
-    <button id="installButton" class="btn">Инструкция</button>
-    <button id="closeBanner" class="close">×</button>
-  </div>
-
-  <!-- Основное содержимое -->
-  <div class="container">
-    <button id="helloButton">Привет</button>
-    <p id="message"></p>
-  </div>
 
   <style>
     body {
@@ -100,7 +85,7 @@
     /* === КНОПКА ПРИВЕТ === */
     .container {
       text-align: center;
-      margin-top: 60px; /* Чтобы не закрывал баннер */
+      margin-top: 60px;
     }
 
     #helloButton {
@@ -135,7 +120,114 @@
     #message.show {
       opacity: 1;
     }
+
+    /* === МОДАЛЬНОЕ ОКНО ИНСТРУКЦИИ === */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      position: relative;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal h3 {
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 18px;
+    }
+
+    .modal p {
+      margin: 0 0 16px 0;
+      color: #555;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #aaa;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      line-height: 28px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .modal-close:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-primary {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
   </style>
+</head>
+<body>
+
+  <!-- 🔽 Баннер "Установите приложение" -->
+  <div id="installBanner" class="banner">
+    <p>Добавьте это приложение на главный экран для лучшего опыта!</p>
+    <button id="installButton" class="btn">Инструкция</button>
+    <button id="closeBanner" class="close">×</button>
+  </div>
+
+  <!-- 🔹 Модальное окно с инструкцией -->
+  <div id="installModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" id="closeModal">×</button>
+      <h3>Как установить приложение</h3>
+      <p id="instructionText">Определяем устройство...</p>
+      <button class="btn-primary" id="confirmModal">Понятно</button>
+    </div>
+  </div>
+
+  <!-- Основное содержимое -->
+  <div class="container">
+    <button id="helloButton">Привет</button>
+    <p id="message"></p>
+  </div>
 
   <script>
     // Элементы
@@ -144,6 +236,11 @@
     const closeBanner = document.getElementById('closeBanner');
     const helloButton = document.getElementById('helloButton');
     const message = document.getElementById('message');
+
+    const modal = document.getElementById('installModal');
+    const instructionText = document.getElementById('instructionText');
+    const closeModal = document.getElementById('closeModal');
+    const confirmModal = document.getElementById('confirmModal');
 
     let deferredPrompt;
 
@@ -155,28 +252,74 @@
       banner.style.display = 'flex';
     }
 
-    // Обработка установки PWA
+    // Определяем платформу
+    function getPlatform() {
+      const ua = navigator.userAgent;
+      if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+        return 'ios';
+      } else if (/Android/.test(ua)) {
+        return 'android';
+      } else {
+        return 'other';
+      }
+    }
+
+    // Показываем инструкцию в зависимости от устройства
+    function showInstallInstruction() {
+      const platform = getPlatform();
+
+      switch (platform) {
+        case 'ios':
+          instructionText.innerHTML = `
+            Откройте меню в браузере Safari.<br><br>
+            Нажмите <strong>«Поделиться»</strong><br>
+            и выберите <strong>«На экран «Домой»»</strong>.
+          `;
+          break;
+        case 'android':
+          instructionText.innerHTML = `
+            Нажмите меню в Chrome (⋮).<br><br>
+            Выберите <strong>«Установить приложение»</strong><br>
+            или <strong>«Добавить на главный экран»</strong>.
+          `;
+          break;
+        default:
+          instructionText.textContent = 'Ваш браузер может поддерживать установку приложения. Ищите опцию "Добавить на главный экран" в меню браузера.';
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    // Обработка события beforeinstallprompt (для Android)
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-
-      installButton.addEventListener('click', () => {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
-            console.log('Пользователь установил приложение');
-            localStorage.setItem('app-installed', 'true');
-            banner.style.display = 'none';
-          }
-          deferredPrompt = null;
-        });
-      });
     });
 
+    // Кнопка "Инструкция" — открывает модалку
+    installButton.addEventListener('click', showInstallInstruction);
+
+    // Закрыть баннер
     closeBanner.addEventListener('click', () => {
       banner.style.display = 'none';
     });
 
+    // Закрыть модалку
+    closeModal.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+    confirmModal.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    // Закрытие модалки кликом вне контента
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+
+    // Кнопка "Привет"
     helloButton.addEventListener('click', () => {
       message.textContent = 'Привет!';
       message.classList.add('show');
@@ -185,7 +328,7 @@
       }, 2000);
     });
 
-    // 🔹 Регистрация Service Worker — лучше вынести отдельно и в конце
+    // Регистрация Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')

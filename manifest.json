@@ -3,11 +3,11 @@
   "short_name": "mentra",
   "description": "qwerty~",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4a90e2",
   "orientation": "portrait",
-  "scope": "/",
   "icons": [
     {
       "src": "/icon.png",
