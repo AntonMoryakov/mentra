@@ -151,17 +151,15 @@
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const wasInstalled = localStorage.getItem('app-installed') === 'true';
 
-    // Если НЕ установлено и НЕ скрыто — покажи баннер
     if (!isStandalone && !wasInstalled) {
       banner.style.display = 'flex';
     }
 
-    // Обработка события установки
+    // Обработка установки PWA
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
 
-      // Кнопка "Установить"
       installButton.addEventListener('click', () => {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choiceResult) => {
@@ -175,22 +173,26 @@
       });
     });
 
-    // Закрыть баннер (временно)
     closeBanner.addEventListener('click', () => {
       banner.style.display = 'none';
-      // Можно сохранить, чтобы не показывать неделю:
-      // localStorage.setItem('banner-closed', Date.now());
     });
 
-    // Показ сообщения при нажатии
     helloButton.addEventListener('click', () => {
       message.textContent = 'Привет!';
       message.classList.add('show');
-
       setTimeout(() => {
         message.classList.remove('show');
       }, 2000);
     });
+
+    // 🔹 Регистрация Service Worker — лучше вынести отдельно и в конце
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('✅ SW зарегистрирован:', reg.scope))
+          .catch(err => console.log('❌ Ошибка регистрации SW:', err));
+      });
+    }
   </script>
 </body>
 </html>
